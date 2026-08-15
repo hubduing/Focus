@@ -15,6 +15,7 @@ export default function CatalogPage() {
   const [categories, setCategories] = useState<CategoryNode[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const page = Math.max(1, Number(searchParams.get('page')) || 1)
   const search = searchParams.get('q') ?? ''
@@ -95,62 +96,71 @@ export default function CatalogPage() {
           </button>
         </form>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 28, alignItems: 'start' }}>
-          <aside>
-            <Filters
-              minPrice={minPrice}
-              maxPrice={maxPrice}
-              inStock={inStock}
-              sort={sort}
-              onMinPrice={(v) => update({ minPrice: v === undefined ? null : String(v) })}
-              onMaxPrice={(v) => update({ maxPrice: v === undefined ? null : String(v) })}
-              onInStock={(v) => update({ inStock: v ? '1' : null })}
-              onSort={(v) => update({ sort: v })}
-            />
-            <div className="panel" style={{ marginTop: 22 }}>
-              <h2>Категории</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <button type="button" className="cat-chip" style={{ textAlign: 'left' }} onClick={() => update({ category: null })}>
-                  Все
-                </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    className="cat-chip"
-                    style={{ textAlign: 'left', ...(category === cat.slug ? { background: 'var(--ink)', color: 'var(--paper)' } : {}) }}
-                    onClick={() => update({ category: cat.slug })}
-                  >
-                    {cat.name}
-                    {cat.children && cat.children.length > 0 && ` (${cat.children.length})`}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </aside>
+<div className="catalog-layout">
+            <button
+              type="button"
+              className="btn btn-ghost btn-small filters-toggle"
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen((v) => !v)}
+            >
+              {filtersOpen ? 'Скрыть фильтры' : 'Фильтры и категории'} {filtersOpen ? '−' : '+'}
+            </button>
 
-          <div>
-            {loading ? (
-              <Spinner />
-            ) : error ? (
-              <div className="alert alert-error">{error}</div>
-            ) : products && products.length === 0 ? (
-              <EmptyState
-                icon="ø"
-                title="Ничего не нашлось"
-                description="Попробуйте изменить фильтры или запрос — но лучше позвоните. Мы почти всегда найдём."
-                action={{ label: 'Сбросить фильтры', to: '/catalog' }}
+            <aside className={filtersOpen ? 'catalog-aside open' : 'catalog-aside'}>
+              <Filters
+                minPrice={minPrice}
+                maxPrice={maxPrice}
+                inStock={inStock}
+                sort={sort}
+                onMinPrice={(v) => update({ minPrice: v === undefined ? null : String(v) })}
+                onMaxPrice={(v) => update({ maxPrice: v === undefined ? null : String(v) })}
+                onInStock={(v) => update({ inStock: v ? '1' : null })}
+                onSort={(v) => update({ sort: v })}
               />
-            ) : (
-              <>
-                <div className="grid">
-                  {products?.map((product) => <ProductCard key={product.id} product={product} />)}
+              <div className="panel" style={{ marginTop: 22 }}>
+                <h2>Категории</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <button type="button" className="cat-chip" style={{ textAlign: 'left' }} onClick={() => update({ category: null })}>
+                    Все
+                  </button>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      className="cat-chip"
+                      style={{ textAlign: 'left', ...(category === cat.slug ? { background: 'var(--ink)', color: 'var(--paper)' } : {}) }}
+                      onClick={() => update({ category: cat.slug })}
+                    >
+                      {cat.name}
+                      {cat.children && cat.children.length > 0 && ` (${cat.children.length})`}
+                    </button>
+                  ))}
                 </div>
-                <Pagination meta={{ page, perPage: 12, total, totalPages }} page={page} onPage={(p) => update({ page: String(p) })} />
-              </>
-            )}
+              </div>
+            </aside>
+
+            <div>
+              {loading ? (
+                <Spinner />
+              ) : error ? (
+                <div className="alert alert-error">{error}</div>
+              ) : products && products.length === 0 ? (
+                <EmptyState
+                  icon="ø"
+                  title="Ничего не нашлось"
+                  description="Попробуйте изменить фильтры или запрос — но лучше позвоните. Мы почти всегда найдём."
+                  action={{ label: 'Сбросить фильтры', to: '/catalog' }}
+                />
+              ) : (
+                <>
+                  <div className="grid">
+                    {products?.map((product) => <ProductCard key={product.id} product={product} />)}
+                  </div>
+                  <Pagination meta={{ page, perPage: 12, total, totalPages }} page={page} onPage={(p) => update({ page: String(p) })} />
+                </>
+              )}
+            </div>
           </div>
-        </div>
       </div>
     </div>
   )

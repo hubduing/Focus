@@ -1,6 +1,7 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import SearchSuggest from './SearchSuggest'
 
 export default function Header() {
   const { user, logout } = useAuth()
@@ -26,6 +27,7 @@ export default function Header() {
             </>
           )}
         </nav>
+        <SearchSuggest />
         <div className="site-actions">
           <Link to="/cart" className="icon-btn" aria-label={`Корзина, товаров: ${count}`}>
             <span aria-hidden="true">🛒</span>
