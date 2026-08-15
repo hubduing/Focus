@@ -46,6 +46,9 @@ export default function LoginPage() {
               <label className="label" htmlFor="l-password">Пароль</label>
               <input id="l-password" className="input" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
+            <div style={{ textAlign: 'right', marginBottom: 12 }}>
+              <Link to="/reset-password" className="link">Забыли пароль?</Link>
+            </div>
             <button className="btn btn-primary" style={{ width: '100%' }} disabled={submitting}>
               {submitting ? 'Входим…' : 'Войти'}
             </button>

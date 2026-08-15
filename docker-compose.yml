@@ -50,6 +50,11 @@ services:
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       STRIPE_CURRENCY: ${STRIPE_CURRENCY:-rub}
       CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-}
     depends_on:
       db:
         condition: service_healthy

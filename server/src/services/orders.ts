@@ -1,7 +1,17 @@
 import { prisma } from '../db/client.js'
 import { HttpError } from '../lib/errors.js'
+import { sendOrderStatusMail } from '../lib/mailer.js'
 import { prepareCheckoutCart } from './cart.js'
 import { assertValidTransition } from './orderStatus.js'
+
+const STATUS_LABELS: Record<string, string> = {
+  created: 'Создан',
+  paid: 'Оплачен',
+  processing: 'В обработке',
+  shipped: 'Отправлен',
+  delivered: 'Доставлен',
+  cancelled: 'Отменён',
+}
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100
@@ -167,11 +177,23 @@ export async function getOrderForAdmin(orderId: string) {
   return { data: mapOrder(order) }
 }
 
-// Смена статуса заказа (админ). Валидирует переходы статусной модели.
+// Смена статуса заказа (админ). Валидирует переходы статусной модели,
+// после изменения отправляет пользователю уведомление на email.
 export async function updateOrderStatus(orderId: string, status: string) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    select: { status: true, payment: true, paymentMethod: true },
+    select: {
+      id: true,
+      status: true,
+      payment: true,
+      paymentMethod: true,
+      userId: true,
+      total: true,
+      items: true,
+      addressLabel: true,
+      addressStreet: true,
+      addressCity: true,
+    },
   })
   if (!order) {
     throw new HttpError(404, 'Заказ не найден')
@@ -190,7 +212,30 @@ export async function updateOrderStatus(orderId: string, status: string) {
     data,
     include: { items: true, payment: true },
   })
-  return { data: mapOrder(updated) }
+  const result = { data: mapOrder(updated) }
+
+  // уведомляем покупателя (ошибка почты не должна ломать ответ)
+  try {
+    const user = await prisma.user.findUnique({ where: { id: order.userId }, select: { email: true } })
+    if (user) {
+      const fromAddress = [order.addressLabel, order.addressStreet, order.addressCity].filter(Boolean).join(', ')
+      await sendOrderStatusMail(user.email, {
+        id: order.id,
+        total: Number(order.total),
+        statusLabel: STATUS_LABELS[status] ?? status,
+        items: order.items.map((item) => ({
+          name: item.nameSnapshot,
+          quantity: item.quantity,
+          price: Number(item.priceSnapshot),
+        })),
+        address: fromAddress || undefined,
+      })
+    }
+  } catch (err) {
+    console.error('[orders] Не удалось отправить уведомление о статусе:', err)
+  }
+
+  return result
 }
 
 export async function listOrdersForAdmin(params: { page: number; perPage: number; status?: string }) {

@@ -97,3 +97,29 @@ docker compose exec api sh -c "node node_modules/.bin/tsx server/prisma/seed.ts"
 
 Переменные окружения — в `.env.example` (`HTTP_PORT`, `POSTGRES_PASSWORD`,
 `JWT_SECRET`, `PAYMENTS_PROVIDER`, `CLIENT_ORIGIN` и др.).
+
+## Email-уведомления (SMTP)
+
+Отправка писем настроена через `nodemailer` + SMTP. Письма:
+
+- **ссылка для сброса пароля** (при запросе `/auth/password/reset`);
+- **смена статуса заказа** (при переходе статуса в админ-панели: оплачен → в обработке → отправлен → доставлен).
+
+Настройка (`.env`):
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=redpendalff@gmail.com
+SMTP_PASS=ваш-app-password
+MAIL_FROM="Умная Корзина <redpendalff@gmail.com>"
+```
+
+Для Gmail: в Google Account → Security включите двухфакторную аутентификацию,
+затем создайте «Пароль приложений» для Mail — это и есть `SMTP_PASS`
+(обычный пароль Gmail не работает).
+
+Если `SMTP_PASS` не задан, письма не отправляются: ссылка сброса пароля
+логируется в консоль сервера (`[test-mode] ...`), а уведомления о статусе
+пропускаются без ошибки — это удобно для локальной разработки и E2E.
+В Docker Compose переменные `SMTP_*` и `MAIL_FROM` пробрасываются в контейнер api.

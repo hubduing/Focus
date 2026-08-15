@@ -259,6 +259,10 @@ export async function apiRequestPasswordReset(email: string) {
   return jsonRequest<{ data: { message: string } }>('/auth/password/reset', 'POST', { email }, false)
 }
 
+export async function apiResetPassword(token: string, password: string) {
+  return jsonRequest<{ data: { message: string } }>('/auth/password/reset/confirm', 'POST', { token, password }, false)
+}
+
 // ---- Профиль ----
 export async function apiGetMe() {
   return request<{ data: User }>('/me', { headers: authHeaders() })

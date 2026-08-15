@@ -2,6 +2,7 @@ import { prisma } from '../db/client.js'
 import { HttpError } from '../lib/errors.js'
 import { hashPassword, verifyPassword } from '../lib/passwords.js'
 import { generateRandomToken, hashToken, signAccessToken } from '../lib/tokens.js'
+import { sendPasswordResetMail } from '../lib/mailer.js'
 
 interface PublicUser {
   id: string
@@ -127,13 +128,14 @@ export async function logoutSession(refreshToken?: string) {
 
 const RESET_TOKEN_TTL_MINUTES = Number(process.env.RESET_TOKEN_TTL_MINUTES ?? 60)
 
-function publicApiBase(): string {
-  return process.env.API_PUBLIC_URL ?? 'http://localhost:4000'
+function resetLinkBase(): string {
+  // Ссылка ведёт на SPA страницу сброса пароля
+  return process.env.CLIENT_ORIGIN?.split(',')[0] ?? 'http://localhost:5173'
 }
 
-// Восстановление пароля. В test-режиме email не отправляется — ссылка логируется в консоль.
+// Запрос ссылки для сброса пароля. В test-режиме без SMTP ссылка логируется в консоль.
 export async function requestPasswordReset(email: string) {
-  const user = await prisma.user.findUnique({ where: { email }, select: { id: true } })
+  const user = await prisma.user.findUnique({ where: { email }, select: { id: true, email: true } })
   // Ответ одинаков в обоих случаях, чтобы не раскрывать наличие аккаунта
   const message = 'Если аккаунт с таким email существует, мы отправим ссылку для сброса пароля'
 
@@ -147,8 +149,13 @@ export async function requestPasswordReset(email: string) {
     data: { userId: user.id, tokenHash: hashToken(token), expiresAt },
   })
 
-  const link = `${publicApiBase()}/api/v1/auth/password/reset/confirm?token=${token}`
-  console.log(`[test-mode] Ссылка для сброса пароля: ${link}`)
+  const link = `${resetLinkBase()}/reset-password?token=${token}`
+  const sent = await sendPasswordResetMail(user.email, link)
+
+  // Без настроенного SMTP ссылка доступна только в консоли (для разработки и E2E)
+  if (!sent) {
+    console.log(`[test-mode] Ссылка для сброса пароля: ${link}`)
+  }
 
   return { data: { message } }
 }
