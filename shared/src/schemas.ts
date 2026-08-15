@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { MAX_CART_QTY } from './cart.js'
 
 // ---- Пользователи ----
 export const registerSchema = z.object({
@@ -109,7 +110,11 @@ export const productSchema = z.object({
 // ---- Корзина ----
 export const cartItemSchema = z.object({
   productId: z.string().uuid(),
-  quantity: z.coerce.number().int().min(1).max(99).default(1),
+  quantity: z.coerce.number().int().min(1).max(MAX_CART_QTY).default(1),
+})
+
+export const cartUpdateSchema = z.object({
+  quantity: z.coerce.number().int().min(1).max(MAX_CART_QTY),
 })
 
 // ---- Заказы ----

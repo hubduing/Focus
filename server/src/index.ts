@@ -4,6 +4,7 @@ import cors from 'cors'
 import rateLimit from 'express-rate-limit'
 import categoriesRouter from './routes/categories.js'
 import productsRouter from './routes/products.js'
+import cartRouter from './routes/cart.js'
 import { errorHandler, notFound } from './lib/errors.js'
 
 const app = express()
@@ -31,6 +32,7 @@ app.get('/health', (_req, res) => {
 const apiRouter = express.Router()
 apiRouter.use('/categories', categoriesRouter)
 apiRouter.use('/products', productsRouter)
+apiRouter.use('/cart', cartRouter)
 
 app.use('/api/v1', apiRouter)
 
