@@ -1,0 +1,81 @@
+import { Router } from 'express'
+import { prisma } from '../db/client.js'
+import { asyncHandler } from '../lib/asyncHandler.js'
+import { HttpError } from '../lib/errors.js'
+import { categorySchema } from 'shared'
+
+const router = Router()
+
+// GET /api/v1/categories — дерево категорий (2 уровня)
+router.get(
+  '/',
+  asyncHandler(async (_req, res) => {
+    const categories = await prisma.category.findMany({
+      orderBy: [{ position: 'asc' }, { name: 'asc' }],
+      include: { children: { orderBy: [{ position: 'asc' }, { name: 'asc' }] } },
+    })
+    res.json({ data: categories })
+  }),
+)
+
+// GET /api/v1/categories/:slug — категория с подкатегориями
+router.get(
+  '/:slug',
+  asyncHandler(async (req, res) => {
+    const category = await prisma.category.findUnique({
+      where: { slug: req.params.slug },
+      include: { children: { orderBy: [{ position: 'asc' }, { name: 'asc' }] } },
+    })
+    if (!category) {
+      throw new HttpError(404, 'Категория не найдена')
+    }
+    res.json({ data: category })
+  }),
+)
+
+// POST /api/v1/categories — создать категорию (ADMIN)
+// Валидация на Этап 6 (roles), здесь базовое создание
+router.post(
+  '/',
+  asyncHandler(async (req, res) => {
+    const input = categorySchema.parse(req.body)
+    const category = await prisma.category.create({
+      data: {
+        name: input.name,
+        slug: input.slug,
+        parentId: input.parentId ?? undefined,
+        position: input.position,
+      },
+    })
+    res.status(201).json({ data: category })
+  }),
+)
+
+// PATCH /api/v1/categories/:id
+router.patch(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    const input = categorySchema.partial().parse(req.body)
+    const category = await prisma.category.update({
+      where: { id: req.params.id },
+      data: {
+        ...(input.name !== undefined && { name: input.name }),
+        ...(input.slug !== undefined && { slug: input.slug }),
+        ...(input.parentId !== undefined && { parentId: input.parentId }),
+        ...(input.position !== undefined && { position: input.position }),
+      },
+    })
+    res.json({ data: category })
+  }),
+)
+
+// DELETE /api/v1/categories/:id
+router.delete(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    await prisma.category.delete({ where: { id: req.params.id } })
+    res.status(204).send()
+  }),
+)
+
+export default router
