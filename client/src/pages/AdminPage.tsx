@@ -186,16 +186,16 @@ function ProductsAdmin({ onToast }: { onToast: (m: string) => void }) {
         <h2>{editing === 'new' ? 'Новый товар' : `Редактирование: ${editing.name}`}</h2>
         <form onSubmit={(e) => void save(e)}>
           <div className="field">
-            <label className="label">Название</label>
-            <input className="input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <label className="label" htmlFor="p-name">Название</label>
+            <input id="p-name" className="input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div className="field">
-            <label className="label">Slug</label>
-            <input className="input" required pattern="[a-z0-9-]+" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} />
+            <label className="label" htmlFor="p-slug">Slug</label>
+            <input id="p-slug" className="input" required pattern="[a-z0-9-]+" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} />
           </div>
           <div className="field">
-            <label className="label">Категория</label>
-            <select className="select" value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
+            <label className="label" htmlFor="p-category">Категория</label>
+            <select id="p-category" className="select" value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -204,28 +204,28 @@ function ProductsAdmin({ onToast }: { onToast: (m: string) => void }) {
             </select>
           </div>
           <div className="field">
-            <label className="label">Цена, ₽</label>
-            <input className="input" type="number" min={0} step="0.01" required value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+            <label className="label" htmlFor="p-price">Цена, ₽</label>
+            <input id="p-price" className="input" type="number" min={0} step="0.01" required value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
           </div>
           <div className="field">
-            <label className="label">Скидочная цена, ₽ (пусто — нет)</label>
-            <input className="input" type="number" min={0} step="0.01" value={form.discountPrice} onChange={(e) => setForm({ ...form, discountPrice: e.target.value })} />
+            <label className="label" htmlFor="p-discount">Скидочная цена, ₽ (пусто — нет)</label>
+            <input id="p-discount" className="input" type="number" min={0} step="0.01" value={form.discountPrice} onChange={(e) => setForm({ ...form, discountPrice: e.target.value })} />
           </div>
           <div className="field">
-            <label className="label">Остаток</label>
-            <input className="input" type="number" min={0} value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+            <label className="label" htmlFor="p-stock">Остаток</label>
+            <input id="p-stock" className="input" type="number" min={0} value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
           </div>
           <div className="field">
-            <label className="label">Описание</label>
-            <textarea className="textarea" rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <label className="label" htmlFor="p-description">Описание</label>
+            <textarea id="p-description" className="textarea" rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
           <div className="field">
-            <label className="label">URL изображений (по одному на строку)</label>
-            <textarea className="textarea" rows={3} value={form.images} onChange={(e) => setForm({ ...form, images: e.target.value })} />
+            <label className="label" htmlFor="p-images">URL изображений (по одному на строку)</label>
+            <textarea id="p-images" className="textarea" rows={3} value={form.images} onChange={(e) => setForm({ ...form, images: e.target.value })} />
           </div>
           <div className="field">
-            <label className="label">Характеристики (JSON, например {"{"}"цвет":"чёрный","гарантия":"1 год"{"}"})</label>
-            <textarea className="textarea" rows={4} value={form.attributes} onChange={(e) => setForm({ ...form, attributes: e.target.value })} />
+            <label className="label" htmlFor="p-attributes">Характеристики (JSON, например {"{"}"цвет":"чёрный","гарантия":"1 год"{"}"})</label>
+            <textarea id="p-attributes" className="textarea" rows={4} value={form.attributes} onChange={(e) => setForm({ ...form, attributes: e.target.value })} />
           </div>
           <div className="field">
             <label className="label">
