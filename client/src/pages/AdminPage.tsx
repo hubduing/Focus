@@ -7,6 +7,7 @@ import {
   apiAdminDeleteProduct,
   apiAdminOrders,
   apiAdminProducts,
+  apiAdminUpdateCategory,
   apiAdminUpdateOrderStatus,
   apiAdminUpdateProduct,
   type CategoryNode,
@@ -43,7 +44,18 @@ function toEditForm(product: Product) {
     stock: String(product.stock),
     active: product.active,
     images: Array.isArray(product.images) ? product.images.join('\n') : '',
+    attributes: JSON.stringify(product.attributes ?? {}, null, 2),
   }
+}
+
+function parseAttributes(raw: string): Record<string, unknown> {
+  const trimmed = raw.trim()
+  if (!trimmed) return {}
+  const value: unknown = JSON.parse(trimmed)
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new Error('Атрибуты должны быть JSON-объектом, например: {"цвет":"чёрный"}')
+  }
+  return value as Record<string, unknown>
 }
 
 export default function AdminPage() {
@@ -117,6 +129,7 @@ function ProductsAdmin({ onToast }: { onToast: (m: string) => void }) {
       stock: '0',
       active: true,
       images: '',
+      attributes: '{}',
     })
   }
 
@@ -138,6 +151,7 @@ function ProductsAdmin({ onToast }: { onToast: (m: string) => void }) {
       stock: Number(form.stock),
       active: form.active,
       images: form.images.split('\n').map((s) => s.trim()).filter(Boolean),
+      attributes: parseAttributes(form.attributes),
     }
     try {
       if (editing === 'new') {
@@ -208,6 +222,10 @@ function ProductsAdmin({ onToast }: { onToast: (m: string) => void }) {
           <div className="field">
             <label className="label">URL изображений (по одному на строку)</label>
             <textarea className="textarea" rows={3} value={form.images} onChange={(e) => setForm({ ...form, images: e.target.value })} />
+          </div>
+          <div className="field">
+            <label className="label">Характеристики (JSON, например {"{"}"цвет":"чёрный","гарантия":"1 год"{"}"})</label>
+            <textarea className="textarea" rows={4} value={form.attributes} onChange={(e) => setForm({ ...form, attributes: e.target.value })} />
           </div>
           <div className="field">
             <label className="label">
@@ -298,6 +316,10 @@ function CategoriesAdmin({ onToast }: { onToast: (m: string) => void }) {
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [parentId, setParentId] = useState('')
+  const [editing, setEditing] = useState<CategoryNode | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editSlug, setEditSlug] = useState('')
+  const [editParentId, setEditParentId] = useState('')
 
   const load = async () => {
     const { data } = await apiAdminCategories()
@@ -322,6 +344,26 @@ function CategoriesAdmin({ onToast }: { onToast: (m: string) => void }) {
     }
   }
 
+  const startEdit = (c: CategoryNode) => {
+    setEditing(c)
+    setEditName(c.name)
+    setEditSlug(c.slug)
+    setEditParentId(c.parentId ?? '')
+  }
+
+  const saveEdit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!editing) return
+    try {
+      await apiAdminUpdateCategory(editing.id, { name: editName, slug: editSlug, parentId: editParentId || null })
+      onToast('Категория обновлена')
+      setEditing(null)
+      void load()
+    } catch (err) {
+      onToast(err instanceof Error ? err.message : 'Не удалось обновить')
+    }
+  }
+
   const remove = async (c: CategoryNode) => {
     if (!window.confirm(`Удалить категорию «${c.name}»?`)) return
     try {
@@ -335,6 +377,32 @@ function CategoriesAdmin({ onToast }: { onToast: (m: string) => void }) {
 
   if (categories === null) return <Spinner />
 
+  const rootCategories = categories.filter((c) => c.parentId === null)
+
+  if (editing) {
+    return (
+      <div className="panel">
+        <h2>Редактирование: {editing.name}</h2>
+        <form onSubmit={(e) => void saveEdit(e)} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+          <input className="input" placeholder="Название" required value={editName} onChange={(e) => setEditName(e.target.value)} />
+          <input className="input" placeholder="Slug (латиницей)" required pattern="[a-z0-9-]+" value={editSlug} onChange={(e) => setEditSlug(e.target.value)} />
+          <select className="select" value={editParentId} onChange={(e) => setEditParentId(e.target.value)}>
+            <option value="">Без родителя</option>
+            {rootCategories
+              .filter((c) => c.id !== editing.id)
+              .map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+          </select>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="btn btn-primary" type="submit">Сохранить</button>
+            <button className="btn btn-ghost" type="button" onClick={() => setEditing(null)}>Отмена</button>
+          </div>
+        </form>
+      </div>
+    )
+  }
+
   return (
     <div className="panel">
       <h2>Новая категория</h2>
@@ -343,7 +411,7 @@ function CategoriesAdmin({ onToast }: { onToast: (m: string) => void }) {
         <input className="input" placeholder="Slug (латиницей)" required pattern="[a-z0-9-]+" value={slug} onChange={(e) => setSlug(e.target.value)} />
         <select className="select" value={parentId} onChange={(e) => setParentId(e.target.value)}>
           <option value="">Без родителя</option>
-          {categories.filter((c) => c.parentId === null).map((c) => (
+          {rootCategories.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
@@ -376,6 +444,7 @@ function CategoriesAdmin({ onToast }: { onToast: (m: string) => void }) {
                 <td>{c.slug}</td>
                 <td>
                   <div className="cell-actions">
+                    <button className="btn btn-ghost btn-small" onClick={() => startEdit(c)}>Изменить</button>
                     <button className="btn btn-danger btn-small" onClick={() => void remove(c)}>Удалить</button>
                   </div>
                 </td>
