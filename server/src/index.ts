@@ -9,6 +9,8 @@ import authRouter from './routes/auth.js'
 import meRouter from './routes/me.js'
 import wishlistRouter from './routes/wishlist.js'
 import ordersRouter from './routes/orders.js'
+import paymentsRouter, { webhookHandler } from './routes/payments.js'
+import adminRouter from './routes/admin.js'
 import { errorHandler, notFound } from './lib/errors.js'
 
 const app = express()
@@ -22,6 +24,11 @@ app.use(
     credentials: true,
   }),
 )
+
+// Webhook Stripe монтируется ДО express.json(): для проверки подписи нужен сырой body.
+app.post('/api/v1/payments/webhook', express.raw({ type: '*/*' }), (req, res, next) => {
+  webhookHandler(req, res, next).catch(next)
+})
 
 app.use(express.json({ limit: '1mb' }))
 
@@ -41,6 +48,8 @@ apiRouter.use('/cart', cartRouter)
 apiRouter.use('/me', meRouter)
 apiRouter.use('/wishlist', wishlistRouter)
 apiRouter.use('/orders', ordersRouter)
+apiRouter.use('/payments', paymentsRouter)
+apiRouter.use('/admin', adminRouter)
 
 app.use('/api/v1', apiRouter)
 

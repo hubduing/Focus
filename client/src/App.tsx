@@ -1,28 +1,55 @@
-import { useState } from 'react'
-import CartBadge from './components/CartBadge'
-import { CartProvider } from './context/CartContext'
+import { Route, Routes } from 'react-router-dom'
+import Header from './components/Header'
+import Footer from './components/Footer'
+import ProtectedRoute from './components/ProtectedRoute'
+import HomePage from './pages/HomePage'
+import CatalogPage from './pages/CatalogPage'
+import ProductPage from './pages/ProductPage'
+import CartPage from './pages/CartPage'
+import CheckoutPage from './pages/CheckoutPage'
+import OrderSuccessPage from './pages/OrderSuccessPage'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import AccountPage from './pages/AccountPage'
+import AccountProfile from './pages/AccountProfile'
+import OrdersPage from './pages/OrdersPage'
+import OrderPage from './pages/OrderPage'
+import WishlistPage from './pages/WishlistPage'
+import AdminPage from './pages/AdminPage'
+import NotFoundPage from './pages/NotFoundPage'
 
 export default function App() {
-  const [count, setCount] = useState(0)
   return (
-    <CartProvider>
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 24px',
-          borderBottom: '1px solid #e2e2e2',
-        }}
-      >
-        <span style={{ fontWeight: 700, fontSize: 18 }}>Магазин</span>
-        <CartBadge />
-      </header>
-      <main style={{ padding: '24px' }}>
-        <h1>Магазин</h1>
-        <p>Фронтенд-каркас готов, каталог появится на Этапе 7.</p>
-        <button onClick={() => setCount((c) => c + 1)}>count: {count}</button>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Header />
+      <main style={{ flex: 1 }}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/catalog" element={<CatalogPage />} />
+          <Route path="/catalog/:slug" element={<ProductPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+
+          <Route element={<ProtectedRoute />}>
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/checkout/success" element={<OrderSuccessPage />} />
+            <Route path="/account" element={<AccountPage />}>
+              <Route index element={<AccountProfile />} />
+              <Route path="orders" element={<OrdersPage />} />
+              <Route path="orders/:id" element={<OrderPage />} />
+              <Route path="wishlist" element={<WishlistPage />} />
+            </Route>
+          </Route>
+
+          <Route element={<ProtectedRoute adminOnly />}>
+            <Route path="/admin" element={<AdminPage />} />
+          </Route>
+
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
       </main>
-    </CartProvider>
+      <Footer />
+    </div>
   )
 }

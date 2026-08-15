@@ -31,13 +31,34 @@ export interface Product {
   active: boolean
 }
 
+export interface OrderItemSnapshot {
+  id: string
+  productId: string
+  name: string
+  price: number
+  quantity: number
+}
+
+export interface OrderPayment {
+  provider: string
+  status: string
+  amount: number
+  providerRef?: string | null
+}
+
 export interface Order {
   id: string
   userId: string
   total: number
   status: OrderStatusValue
   paymentMethod: string
+  addressLabel: string
+  addressStreet: string
+  addressCity: string
+  addressZip: string | null
   createdAt: Date
+  items?: OrderItemSnapshot[]
+  payment?: OrderPayment | null
 }
 
 export interface Address {

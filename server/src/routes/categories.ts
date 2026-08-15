@@ -2,9 +2,13 @@ import { Router } from 'express'
 import { prisma } from '../db/client.js'
 import { asyncHandler } from '../lib/asyncHandler.js'
 import { HttpError } from '../lib/errors.js'
+import { requireAdmin, requireUser } from '../middleware/auth.js'
 import { categorySchema } from 'shared'
 
 const router = Router()
+
+// Мутации категорий — только для админов (см. /admin/categories, Этап 6)
+const adminOnly = [requireUser, requireAdmin]
 
 // GET /api/v1/categories — дерево категорий (2 уровня)
 router.get(
@@ -34,10 +38,7 @@ router.get(
 )
 
 // POST /api/v1/categories — создать категорию (ADMIN)
-// Валидация на Этап 6 (roles), здесь базовое создание
-router.post(
-  '/',
-  asyncHandler(async (req, res) => {
+router.post('/', ...adminOnly, asyncHandler(async (req, res) => {
     const input = categorySchema.parse(req.body)
     if (input.parentId) {
       const parent = await prisma.category.findUnique({ where: { id: input.parentId } })
@@ -61,9 +62,7 @@ router.post(
 )
 
 // PATCH /api/v1/categories/:id
-router.patch(
-  '/:id',
-  asyncHandler(async (req, res) => {
+router.patch('/:id', ...adminOnly, asyncHandler(async (req, res) => {
     const input = categorySchema.partial().parse(req.body)
     if (input.parentId) {
       const parent = await prisma.category.findUnique({ where: { id: input.parentId } })
@@ -88,9 +87,7 @@ router.patch(
 )
 
 // DELETE /api/v1/categories/:id
-router.delete(
-  '/:id',
-  asyncHandler(async (req, res) => {
+router.delete('/:id', ...adminOnly, asyncHandler(async (req, res) => {
     await prisma.category.delete({ where: { id: req.params.id } })
     res.status(204).send()
   }),

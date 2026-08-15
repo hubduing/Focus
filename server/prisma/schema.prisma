@@ -85,6 +85,10 @@ model Order {
   total         Decimal     @db.Decimal(12, 2)
   status        String      @default("created")
   paymentMethod String
+  addressLabel  String
+  addressStreet String
+  addressCity   String
+  addressZip    String?
   createdAt     DateTime    @default(now())
   items         OrderItem[]
   payment       Payment?

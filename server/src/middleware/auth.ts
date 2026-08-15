@@ -33,3 +33,15 @@ export function requireUser(req: Request, _res: Response, next: NextFunction) {
   req.user = user
   next()
 }
+
+export function requireAdmin(req: Request, _res: Response, next: NextFunction) {
+  if (!req.user) {
+    next(new HttpError(401, 'Требуется авторизация'))
+    return
+  }
+  if (req.user.role !== 'admin') {
+    next(new HttpError(403, 'Недостаточно прав: требуется роль admin'))
+    return
+  }
+  next()
+}

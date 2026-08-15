@@ -10,6 +10,7 @@
     "build": "npm run build --workspaces",
     "lint": "npm run lint --workspaces",
     "test": "npm run test --workspaces",
+    "test:e2e": "playwright test",
     "typecheck": "npm run typecheck --workspaces"
   },
   "workspaces": [
@@ -22,6 +23,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
+    "concurrently": "^9.2.4",
     "eslint": "^10.8.1",
     "prettier": "^3.9.6",
     "typescript-eslint": "^8.67.0"

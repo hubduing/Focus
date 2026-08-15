@@ -12,6 +12,7 @@ export interface ListProductsParams {
   maxPrice?: number
   inStock?: boolean
   attributes?: Record<string, string | number | boolean>
+  ids?: string
   sort: SortOptionValue
 }
 
@@ -41,6 +42,18 @@ interface SqlFilter {
 
 function buildSqlFilters(p: ListProductsParams, scope: CategoryScope | undefined): SqlFilter {
   const where: Prisma.Sql[] = [Prisma.sql`"Product"."active" = true`]
+
+  if (p.ids) {
+    const ids = p.ids
+      .split(',')
+      .map((id) => id.trim())
+      .filter((id) => UUID_RE.test(id))
+    if (ids.length > 0) {
+      where.push(Prisma.sql`"Product"."id"::text = ANY(${ids})`)
+    } else {
+      where.push(Prisma.sql`FALSE`)
+    }
+  }
 
   if (scope && scope.ids.length > 0) {
     where.push(Prisma.sql`"Product"."categoryId"::text = ANY(${scope.ids})`)
@@ -194,8 +207,8 @@ export async function listProducts(p: ListProductsParams) {
   `)
 
   const orderBy = buildOrderBy(p, search)
-  const page = p.page
-  const perPage = p.perPage
+  const page = p.ids ? 1 : p.page
+  const perPage = p.ids ? Math.max(p.perPage, 100) : p.perPage
 
   const rows = await prisma.$queryRaw<ProductRow[]>(Prisma.sql`
     ${PRODUCT_SELECT}

@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Order" ADD COLUMN "addressLabel" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Order" ADD COLUMN "addressStreet" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Order" ADD COLUMN "addressCity" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Order" ADD COLUMN "addressZip" TEXT;

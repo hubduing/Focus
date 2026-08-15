@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { productListQuerySchema, productSchema } from 'shared'
 import { asyncHandler } from '../lib/asyncHandler.js'
 import { getProductBySlug, getRelatedProducts, listProducts } from '../services/catalog.js'
+import { requireAdmin, requireUser } from '../middleware/auth.js'
 import { prisma } from '../db/client.js'
 
 const router = Router()
@@ -35,10 +36,12 @@ router.get(
   }),
 )
 
-// POST /api/v1/products — создать товар (ADMIN на Этапе 6)
-router.post(
-  '/',
-  asyncHandler(async (req, res) => {
+// Мутации товаров — только для админов (полноценная админ-панель на Этапе 6,
+// API: /admin/products/*). Здесь guard для защиты публичного каталога.
+const adminOnly = [requireUser, requireAdmin]
+
+// POST /api/v1/products — создать товар (ADMIN)
+router.post('/', ...adminOnly, asyncHandler(async (req, res) => {
     const input = productSchema.parse(req.body)
     const product = await prisma.product.create({
       data: {
@@ -59,9 +62,7 @@ router.post(
 )
 
 // PATCH /api/v1/products/:id
-router.patch(
-  '/:id',
-  asyncHandler(async (req, res) => {
+router.patch('/:id', ...adminOnly, asyncHandler(async (req, res) => {
     const input = productSchema.partial().parse(req.body)
     const product = await prisma.product.update({
       where: { id: req.params.id },
@@ -83,9 +84,7 @@ router.patch(
 )
 
 // DELETE /api/v1/products/:id
-router.delete(
-  '/:id',
-  asyncHandler(async (req, res) => {
+router.delete('/:id', ...adminOnly, asyncHandler(async (req, res) => {
     await prisma.product.delete({ where: { id: req.params.id } })
     res.status(204).send()
   }),

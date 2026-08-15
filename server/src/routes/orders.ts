@@ -1,14 +1,21 @@
 import { Router } from 'express'
-import { pagingSchema } from 'shared'
+import { createOrderSchema, pagingSchema } from 'shared'
 import { asyncHandler } from '../lib/asyncHandler.js'
 import { requireUser } from '../middleware/auth.js'
 import * as ordersService from '../services/orders.js'
 
 const router = Router()
 
-// Создание заказа (POST /orders) — Этап 5 (оформление заказа и платежи).
-// Здесь — история заказов и статусы для личного кабинета.
 router.use(requireUser)
+
+// POST /api/v1/orders — создание заказа из корзины (оформление заказа)
+router.post(
+  '/',
+  asyncHandler(async (req, res) => {
+    const input = createOrderSchema.parse(req.body)
+    res.status(201).json(await ordersService.createOrder(req.user!.id, input))
+  }),
+)
 
 // GET /api/v1/orders — история заказов пользователя
 router.get(
