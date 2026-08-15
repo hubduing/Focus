@@ -5,6 +5,10 @@ import rateLimit from 'express-rate-limit'
 import categoriesRouter from './routes/categories.js'
 import productsRouter from './routes/products.js'
 import cartRouter from './routes/cart.js'
+import authRouter from './routes/auth.js'
+import meRouter from './routes/me.js'
+import wishlistRouter from './routes/wishlist.js'
+import ordersRouter from './routes/orders.js'
 import { errorHandler, notFound } from './lib/errors.js'
 
 const app = express()
@@ -30,9 +34,13 @@ app.get('/health', (_req, res) => {
 })
 
 const apiRouter = express.Router()
+apiRouter.use('/auth', authRouter)
 apiRouter.use('/categories', categoriesRouter)
 apiRouter.use('/products', productsRouter)
 apiRouter.use('/cart', cartRouter)
+apiRouter.use('/me', meRouter)
+apiRouter.use('/wishlist', wishlistRouter)
+apiRouter.use('/orders', ordersRouter)
 
 app.use('/api/v1', apiRouter)
 

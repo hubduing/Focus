@@ -14,6 +14,10 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 })
 
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1),
+})
+
 export const updateProfileSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   phone: z.string().optional(),
@@ -115,6 +119,11 @@ export const cartItemSchema = z.object({
 
 export const cartUpdateSchema = z.object({
   quantity: z.coerce.number().int().min(1).max(MAX_CART_QTY),
+})
+
+// ---- Избранное ----
+export const wishlistItemSchema = z.object({
+  productId: z.string().uuid(),
 })
 
 // ---- Заказы ----
