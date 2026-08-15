@@ -40,3 +40,60 @@ npm run typecheck    # typecheck по всем пакетам
 npm test             # тесты
 npm run build        # сборка
 ```
+
+## Локальная разработка (Dev)
+
+```bash
+docker compose -f docker-compose.dev.yml up -d   # PostgreSQL + Redis
+cp .env.example server/.env                       # подстройте под себя
+npm run dev:server
+npm run dev:client
+```
+
+Применить миграции и наполнить БД демо-данными:
+
+```bash
+npx prisma migrate deploy --schema server/prisma/schema.prisma
+npm run db:seed -w server
+```
+
+## Деплой (Production, Docker Compose)
+
+Стек поднимается целиком: `db` (PostgreSQL), `redis`, `api` (Express),
+`web` (nginx со статикой SPA), `nginx` (входной reverse-proxy на порту 80).
+
+```bash
+# 1. Настройте переменные (JWT_SECRET обязателен, остальное по умолчанию)
+cp .env.example .env
+
+# PowerShell:
+#   $env:JWT_SECRET = (openssl rand -hex 32)
+# bash/zsh:
+#   export JWT_SECRET=$(openssl rand -hex 32)
+
+# 2. Соберите и запустите все сервисы
+docker compose up -d --build
+
+# 3. Примените миграции (автоматически при старте api) и засейте демо-данные
+docker compose exec api sh -c "node node_modules/.bin/tsx server/prisma/seed.ts"
+```
+
+Проверка после запуска:
+
+- `http://localhost/health` — healthcheck API
+- `http://localhost/api/v1/products` — JSON-список товаров
+- `http://localhost/` — SPA
+
+Демо-аккаунты (создаются seed-скриптом):
+
+| Роль  | Email             | Пароль   |
+| ----- | ----------------- | -------- |
+| admin | admin@example.com | admin123 |
+| user  | user@example.com  | user123  |
+
+Тестовая карта Stripe (test mode): **4242 4242 4242 4242**, любой срок и CVC.
+Для реальной интеграции задайте `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
+и `PAYMENTS_PROVIDER=stripe`.
+
+Переменные окружения — в `.env.example` (`HTTP_PORT`, `POSTGRES_PASSWORD`,
+`JWT_SECRET`, `PAYMENTS_PROVIDER`, `CLIENT_ORIGIN` и др.).
