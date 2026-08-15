@@ -1,0 +1,35 @@
+# Зависимости
+node_modules/
+.pnp
+.pnp.js
+
+# Сборка
+dist/
+build/
+*.tsbuildinfo
+
+# Переменные окружения — никогда не коммитить секреты
+.env
+.env.*
+!.env.example
+
+# Логи
+logs/
+*.log
+npm-debug.log*
+
+# Тесты
+coverage/
+playwright-report/
+test-results/
+
+# Редакторы и ОС
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Базы данных (локальные)
+*.sqlite
+*.sqlite-journal
+prisma/dev.db

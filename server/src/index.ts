@@ -1,0 +1,1 @@
+export const serverPlaceholder = 'Этап 1: здесь будет Express-сервер'
