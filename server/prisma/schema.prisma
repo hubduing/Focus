@@ -57,6 +57,7 @@ model Product {
   images        Json     @default("[]")
   active        Boolean  @default(true)
   createdAt     DateTime @default(now())
+  searchVector  Unsupported("tsvector")?
   cartItems     CartItem[]
   orderItems    OrderItem[]
   wishlist      Wishlist[]

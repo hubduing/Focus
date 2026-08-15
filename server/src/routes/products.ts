@@ -1,40 +1,28 @@
 import { Router } from 'express'
-import { Prisma } from '@prisma/client'
-import { prisma } from '../db/client.js'
+import { productListQuerySchema, productSchema } from 'shared'
 import { asyncHandler } from '../lib/asyncHandler.js'
-import { HttpError } from '../lib/errors.js'
-import { productSchema } from 'shared'
+import { getProductBySlug, getRelatedProducts, listProducts } from '../services/catalog.js'
+import { prisma } from '../db/client.js'
 
 const router = Router()
 
-// GET /api/v1/products — список с пагинацией
+// GET /api/v1/products — список с пагинацией, поиском, фильтрами и сортировкой
 router.get(
   '/',
   asyncHandler(async (req, res) => {
-    const page = Math.max(1, Number(req.query.page) || 1)
-    const perPage = Math.min(100, Math.max(1, Number(req.query.perPage) || 20))
-    const categoryId = typeof req.query.category === 'string' ? req.query.category : undefined
+    const query = productListQuerySchema.parse(req.query)
+    const result = await listProducts(query)
+    res.json(result)
+  }),
+)
 
-    const where: Prisma.ProductWhereInput = {
-      active: true,
-      ...(categoryId && { categoryId }),
-    }
-
-    const [total, products] = await Promise.all([
-      prisma.product.count({ where }),
-      prisma.product.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * perPage,
-        take: perPage,
-        include: { category: true },
-      }),
-    ])
-
-    res.json({
-      data: products,
-      meta: { page, perPage, total, totalPages: Math.ceil(total / perPage) },
-    })
+// GET /api/v1/products/:slug/related — похожие товары (та же категория)
+router.get(
+  '/:slug/related',
+  asyncHandler(async (req, res) => {
+    const limit = Math.min(20, Math.max(1, Number(req.query.limit) || 8))
+    const result = await getRelatedProducts(req.params.slug, limit)
+    res.json(result)
   }),
 )
 
@@ -42,14 +30,8 @@ router.get(
 router.get(
   '/:slug',
   asyncHandler(async (req, res) => {
-    const product = await prisma.product.findUnique({
-      where: { slug: req.params.slug },
-      include: { category: true },
-    })
-    if (!product || !product.active) {
-      throw new HttpError(404, 'Товар не найден')
-    }
-    res.json({ data: product })
+    const result = await getProductBySlug(req.params.slug)
+    res.json(result)
   }),
 )
 

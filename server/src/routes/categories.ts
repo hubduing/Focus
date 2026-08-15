@@ -39,6 +39,15 @@ router.post(
   '/',
   asyncHandler(async (req, res) => {
     const input = categorySchema.parse(req.body)
+    if (input.parentId) {
+      const parent = await prisma.category.findUnique({ where: { id: input.parentId } })
+      if (!parent) {
+        throw new HttpError(400, 'Родительская категория не найдена')
+      }
+      if (parent.parentId) {
+        throw new HttpError(400, 'Вложенность категорий допускается максимум до 2 уровней')
+      }
+    }
     const category = await prisma.category.create({
       data: {
         name: input.name,
@@ -56,6 +65,15 @@ router.patch(
   '/:id',
   asyncHandler(async (req, res) => {
     const input = categorySchema.partial().parse(req.body)
+    if (input.parentId) {
+      const parent = await prisma.category.findUnique({ where: { id: input.parentId } })
+      if (!parent) {
+        throw new HttpError(400, 'Родительская категория не найдена')
+      }
+      if (parent.parentId) {
+        throw new HttpError(400, 'Вложенность категорий допускается максимум до 2 уровней')
+      }
+    }
     const category = await prisma.category.update({
       where: { id: req.params.id },
       data: {

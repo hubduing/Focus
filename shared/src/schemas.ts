@@ -42,6 +42,57 @@ export const categorySchema = z.object({
   position: z.coerce.number().int().min(0).default(0),
 })
 
+export const SortOption = {
+  NEWEST: 'newest',
+  PRICE_ASC: 'price_asc',
+  PRICE_DESC: 'price_desc',
+  NAME_ASC: 'name_asc',
+  NAME_DESC: 'name_desc',
+} as const
+
+export type SortOptionValue = (typeof SortOption)[keyof typeof SortOption]
+
+const booleanParam = z
+  .union([z.literal('true'), z.literal('false'), z.literal('1'), z.literal('0')])
+  .optional()
+  .transform((v) => (v === undefined ? undefined : v === 'true' || v === '1'))
+
+export const attributeFilterSchema = z.record(
+  z.string().min(1).max(100),
+  z.union([z.string(), z.number(), z.boolean()]),
+)
+
+const attributesJson = z
+  .string()
+  .optional()
+  .transform((raw, ctx) => {
+    if (raw === undefined) return undefined
+    try {
+      const value: unknown = JSON.parse(raw)
+      const parsed = attributeFilterSchema.safeParse(value)
+      if (!parsed.success) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'attributes должен быть JSON-объектом с примитивными значениями' })
+        return z.NEVER
+      }
+      return parsed.data
+    } catch {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'attributes должен быть корректным JSON' })
+      return z.NEVER
+    }
+  })
+
+export const productListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  perPage: z.coerce.number().int().min(1).max(100).default(20),
+  search: z.string().trim().min(1).max(100).optional(),
+  category: z.string().trim().min(1).max(200).optional(),
+  minPrice: z.coerce.number().min(0).optional(),
+  maxPrice: z.coerce.number().min(0).optional(),
+  inStock: booleanParam,
+  attributes: attributesJson,
+  sort: z.enum(Object.values(SortOption) as [SortOptionValue, ...SortOptionValue[]]).default(SortOption.NEWEST),
+})
+
 export const productSchema = z.object({
   categoryId: z.string().uuid(),
   name: z.string().min(1).max(200),
